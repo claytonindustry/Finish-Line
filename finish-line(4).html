@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Finish Line</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07090d;--s1:#0d1219;--s2:#131c28;--s3:#1a2535;
+  --b1:#1e3050;--b2:#253a58;
+  --cal:#00b4ff;--cal-dim:rgba(0,180,255,.1);--cal-b:rgba(0,180,255,.25);
+  --phrf:#ff6b2b;--phrf-dim:rgba(255,107,43,.1);--phrf-b:rgba(255,107,43,.25);
+  --green:#00e676;--green-dim:rgba(0,230,118,.1);
+  --amber:#ffb300;--amber-dim:rgba(255,179,0,.12);
+  --red:#ff3d57;--gold:#ffd700;
+  --pro:#c084fc;--pro-dim:rgba(192,132,252,.1);
+  --off:#34d399;--crew:#64748b;
+  --text:#b8cce0;--muted:#3d5a78;--white:#f0f8ff;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(0,180,255,.04),transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(255,107,43,.04),transparent 60%);pointer-events:none;z-index:0;}
+
+/* ── SCREENS ── */
+.screen{display:none;position:fixed;inset:0;z-index:1;overflow-y:auto;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ── INPUTS / BUTTONS ── */
+.inp{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:6px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;font-weight:600;padding:13px 16px;outline:none;transition:border-color .2s;}
+.inp:focus{border-color:var(--cal);}
+.inp::placeholder{color:var(--muted);}
+input[type=datetime-local].inp{font-size:13px;}
+input[type=datetime-local]::-webkit-calendar-picker-indicator{filter:invert(.4);}
+select.inp{cursor:pointer;}
+
+.btn{background:transparent;border:1px solid var(--b2);color:var(--text);font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;padding:10px 18px;border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
+.btn:active{transform:scale(.95);}
+.btn.full{width:100%;}
+.btn.cal{border-color:var(--cal);color:var(--cal);}
+.btn.cal:active{background:var(--cal);color:var(--bg);}
+.btn.phrf{border-color:var(--phrf);color:var(--phrf);}
+.btn.red{border-color:var(--red);color:var(--red);}
+.btn.red:active{background:var(--red);color:#fff;}
+.btn.amber{border-color:var(--amber);color:var(--amber);}
+.btn.solid-cal{background:var(--cal);border-color:var(--cal);color:var(--bg);}
+.btn.solid-cal:active{background:#33c6ff;}
+.btn.solid-green{background:var(--green);border-color:var(--green);color:var(--bg);}
+.btn.solid-green:active{background:#00c060;}
+.btn.solid-pro{background:var(--pro);border-color:var(--pro);color:var(--bg);}
+.btn:disabled{opacity:.2;cursor:not-allowed;transform:none!important;}
+
+/* ══════════ LANDING SCREEN ══════════ */
+#screen-land{align-items:center;justify-content:center;padding:24px 20px;}
+.land-inner{width:100%;max-width:400px;display:flex;flex-direction:column;gap:14px;}
+.land-brand{text-align:center;margin-bottom:8px;}
+.land-brand h1{font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:10px;color:var(--white);line-height:1;}
+.land-brand h1 em{color:var(--cal);font-style:normal;}
+.land-brand p{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+.land-sep{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:11px;letter-spacing:2px;}
+.land-sep::before,.land-sep::after{content:'';flex:1;height:1px;background:var(--b1);}
+.land-room-inp{font-family:'Share Tech Mono',monospace;font-size:26px;letter-spacing:8px;text-align:center;text-transform:uppercase;padding:16px;}
+.land-err{color:var(--red);font-size:13px;text-align:center;display:none;}
+.land-login-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:4px;}
+.land-login-row span{font-size:12px;color:var(--muted);}
+.role-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:1px;border:1px solid;}
+.role-badge.crew{border-color:var(--crew);color:var(--crew);}
+.role-badge.officer{border-color:var(--off);color:var(--off);}
+.role-badge.pro{border-color:var(--pro);color:var(--pro);}
+
+/* ══════════ CREW VIEW ══════════ */
+#screen-crew{background:var(--bg);}
+.crew-wrap{flex:1;display:flex;flex-direction:column;padding:16px 14px 20px;max-width:480px;margin:0 auto;width:100%;}
+.crew-topbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-shrink:0;}
+.crew-topbar h2{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:var(--white);flex:1;}
+.crew-room{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--cal);border:1px solid var(--cal-b);padding:3px 9px;border-radius:12px;letter-spacing:2px;}
+
+/* Big clocks */
+.crew-clocks{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;flex-shrink:0;}
+.crew-clock-box{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:14px 18px;text-align:center;}
+.crew-clock-box.main{border-color:var(--cal-b);}
+.cc-lbl{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:6px;}
+.cc-val{font-family:'Share Tech Mono',monospace;font-size:56px;line-height:1;color:var(--white);}
+.cc-val.cdwn{color:var(--phrf);}
+.cc-val.run{color:var(--green);}
+.cc-val.wall{font-size:36px;color:var(--cal);}
+.crew-clocks-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* Crew log */
+.crew-log{flex:1;overflow-y:auto;background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:12px;}
+.crew-log-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:10px;}
+.log-entry{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--b1);font-size:12px;}
+.log-entry:last-child{border-bottom:none;}
+.le-time{font-family:'Share Tech Mono',monospace;color:var(--muted);font-size:10px;flex-shrink:0;margin-top:2px;}
+.le-txt{flex:1;color:var(--text);line-height:1.4;}
+.le-txt.finish{color:var(--green);}
+.le-txt.ocs{color:var(--amber);}
+.le-txt.start{color:var(--cal);}
+.le-txt.end{color:var(--pro);}
+
+/* ══════════ OFFICER VIEW ══════════ */
+#screen-officer{background:var(--bg);}
+.off-topbar{background:rgba(7,9,13,.95);border-bottom:1px solid var(--b1);padding:8px 14px;flex-shrink:0;position:sticky;top:0;z-index:50;backdrop-filter:blur(8px);}
+.off-topbar-inner{max-width:580px;margin:0 auto;display:flex;align-items:center;gap:8px;}
+.off-topbar h2{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:4px;color:var(--white);flex:1;}
+.wall-disp{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--cal);}
+
+/* Clock strip */
+.clock-strip{background:var(--s1);border-bottom:1px solid var(--b1);flex-shrink:0;}
+.clock-strip-inner{max-width:580px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--b1);}
+.cs-cell{background:var(--s1);padding:8px 14px;text-align:center;}
+.cs-lbl{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:3px;}
+.cs-val{font-family:'Share Tech Mono',monospace;font-size:24px;line-height:1;color:var(--white);}
+.cs-val.cdwn{color:var(--phrf);}
+.cs-val.run{color:var(--green);}
+
+.off-body{flex:1;overflow-y:auto;padding:12px 14px 100px;}
+.off-body-inner{max-width:580px;margin:0 auto;}
+
+/* Stage grid — 4 large slots */
+.stage-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.stage-slot{background:var(--s1);border:2px dashed var(--b2);border-radius:8px;min-height:90px;display:flex;flex-direction:column;align-items:stretch;justify-content:center;transition:border-color .2s,background .2s;overflow:hidden;position:relative;}
+.stage-slot.drag-over{border-color:var(--green);background:var(--green-dim);}
+.stage-slot.empty .slot-empty-lbl{display:flex;align-items:center;justify-content:center;height:90px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.stage-slot.filled{border-style:solid;}
+.stage-slot.filled.cal-slot{border-color:var(--cal-b);}
+.stage-slot.filled.phrf-slot{border-color:var(--phrf-b);}
+.slot-inner{padding:10px 12px;display:flex;flex-direction:column;height:100%;}
+.slot-fleet-tag{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:4px;}
+.slot-fleet-tag.cal{color:var(--cal);}
+.slot-fleet-tag.phrf{color:var(--phrf);}
+.slot-name{font-size:17px;font-weight:800;color:var(--white);line-height:1.2;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.slot-sail{font-size:11px;color:var(--muted);margin-bottom:8px;}
+.slot-actions{display:flex;gap:6px;margin-top:auto;}
+.finish-btn{flex:1;border:none;border-radius:5px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;padding:10px 6px;cursor:pointer;touch-action:manipulation;transition:transform .1s,filter .1s;}
+.finish-btn:active{transform:scale(.9);filter:brightness(.75);}
+.finish-btn:disabled{opacity:.2;cursor:not-allowed;transform:none!important;}
+.finish-btn.cal-fb{background:var(--cal);color:var(--bg);}
+.finish-btn.phrf-fb{background:var(--phrf);color:var(--bg);}
+.unstage-btn{background:none;border:1px solid var(--b2);border-radius:4px;color:var(--muted);font-size:14px;padding:6px 8px;cursor:pointer;flex-shrink:0;}
+.unstage-btn:active{border-color:var(--red);color:var(--red);}
+
+/* Unified boat list */
+.list-hdr{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:700;padding:2px 2px 8px;display:flex;align-items:center;gap:8px;}
+.list-hdr::after{content:'';flex:1;height:1px;background:var(--b1);}
+.boat-list{display:flex;flex-direction:column;gap:7px;}
+.boat-row{display:flex;align-items:center;gap:8px;padding:11px 12px;background:var(--s1);border:1px solid var(--b1);border-radius:6px;transition:border-color .2s;position:relative;overflow:hidden;touch-action:pan-y;}
+.boat-row.ocs-on{border-color:var(--amber);background:var(--amber-dim);}
+.boat-row.drag-over{border-color:var(--green);background:var(--green-dim);}
+.boat-row.dragging{opacity:.3;}
+.dh{color:var(--muted);font-size:20px;flex-shrink:0;cursor:grab;touch-action:none;line-height:1;}
+.dh.locked{cursor:default;opacity:.2;}
+.br-info{flex:1;min-width:0;}
+.br-name{font-size:15px;font-weight:700;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.br-sub{font-size:11px;color:var(--muted);margin-top:1px;display:flex;align-items:center;gap:6px;}
+.fleet-tag{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:700;padding:1px 6px;border-radius:3px;}
+.fleet-tag.cal{background:var(--cal-dim);color:var(--cal);border:1px solid var(--cal-b);}
+.fleet-tag.phrf{background:var(--phrf-dim);color:var(--phrf);border:1px solid var(--phrf-b);}
+.ocs-badge{font-size:9px;letter-spacing:2px;color:var(--amber);background:var(--amber-dim);border:1px solid var(--amber);padding:1px 5px;border-radius:2px;}
+.stage-big-btn{flex-shrink:0;border-radius:6px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;padding:11px 16px;cursor:pointer;touch-action:manipulation;border:1px solid;background:transparent;transition:all .15s;}
+.stage-big-btn:active{transform:scale(.93);}
+.stage-big-btn.cal{border-color:var(--cal);color:var(--cal);}
+.stage-big-btn.phrf{border-color:var(--phrf);color:var(--phrf);}
+.stage-big-btn:disabled{opacity:.2;cursor:not-allowed;}
+
+/* OCS swipe reveal */
+.ocs-reveal{position:absolute;right:0;top:0;bottom:0;width:80px;background:var(--amber);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--bg);transform:translateX(100%);transition:transform .2s;cursor:pointer;border-radius:0 6px 6px 0;}
+.ocs-reveal.show{transform:translateX(0);}
+.clr-ocs-reveal{background:var(--muted);}
+
+/* Bottom bar */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(7,9,13,.96);border-top:1px solid var(--b1);padding:10px 14px;z-index:40;backdrop-filter:blur(8px);}
+.bottom-bar-inner{max-width:580px;margin:0 auto;display:flex;gap:8px;align-items:center;}
+
+/* ══════════ END RACE SCREEN ══════════ */
+#screen-end{background:var(--bg);align-items:center;}
+.end-wrap{width:100%;max-width:560px;padding:20px 16px 60px;}
+.end-brand{text-align:center;padding:24px 0 20px;}
+.end-brand h2{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:8px;color:var(--white);}
+.end-brand p{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+.results-fleet-hdr{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:4px;margin:16px 0 8px;display:flex;align-items:center;gap:8px;}
+.results-fleet-hdr .rfdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.result-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--s1);border:1px solid var(--b1);border-radius:6px;margin-bottom:6px;animation:slideR .25s ease;}
+@keyframes slideR{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.place-b{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;flex-shrink:0;}
+.p1{background:var(--gold);color:#111;}.p2{background:#94a3b8;color:#111;}.p3{background:#b45309;color:#fff;}.pn{background:var(--s2);color:var(--muted);border:1px solid var(--b1);}
+.res-info{flex:1;min-width:0;}
+.res-name{font-size:14px;font-weight:700;color:var(--white);}
+.res-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.res-times{text-align:right;}
+.res-elapsed{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--text);}
+.res-corr{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--gold);}
+.res-clock{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);}
+.divider{height:1px;background:var(--b1);margin:16px 0;}
+.full-log-wrap{background:var(--s1);border:1px solid var(--b1);border-radius:6px;padding:12px;margin-top:8px;max-height:240px;overflow-y:auto;}
+
+/* ══════════ DRAWERS ══════════ */
+.drawer{position:fixed;inset:0;z-index:150;display:flex;flex-direction:column;justify-content:flex-end;}
+.drawer.hidden{display:none;}
+.drawer-bd{position:absolute;inset:0;background:rgba(0,0,0,.7);}
+.drawer-panel{position:relative;background:var(--s1);border-top:1px solid var(--b2);border-radius:12px 12px 0 0;max-height:88vh;display:flex;flex-direction:column;animation:slideUp .22s ease;}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.dw-handle{width:36px;height:4px;background:var(--b2);border-radius:2px;margin:10px auto 0;flex-shrink:0;}
+.dw-hdr{display:flex;align-items:center;padding:12px 16px 10px;border-bottom:1px solid var(--b1);gap:10px;flex-shrink:0;}
+.dw-hdr h3{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:var(--white);flex:1;}
+.dw-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;}
+.dw-body{overflow-y:auto;padding:14px 16px 30px;flex:1;}
+.dw-tabs{display:flex;border-bottom:1px solid var(--b1);flex-shrink:0;padding:0 16px;}
+.dtab{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;padding:8px 14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;}
+.dtab.active{color:var(--white);border-bottom-color:var(--cal);}
+
+/* Roster/Fleet items */
+.ri{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;margin-bottom:8px;}
+.ri-info{flex:1;min-width:0;}
+.ri-name{font-size:14px;font-weight:700;color:var(--white);}
+.ri-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.ri-acts{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;}
+.sm-btn{background:none;border:1px solid var(--b2);border-radius:3px;color:var(--text);font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;padding:4px 8px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.sm-btn:active{transform:scale(.93);}
+.sm-btn.cal{border-color:var(--cal);color:var(--cal);}
+.sm-btn.phrf{border-color:var(--phrf);color:var(--phrf);}
+.sm-btn.edit{border-color:var(--muted);color:var(--muted);}
+.sm-btn.del{border-color:var(--red);color:var(--red);}
+.edit-form{background:var(--s2);border:1px solid var(--b2);border-radius:4px;padding:10px;margin-bottom:8px;}
+.field{margin-bottom:9px;}
+.field label{display:block;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px;}
+
+/* Online users */
+.cu-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);}
+.cu-item:last-child{border-bottom:none;}
+.cu-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.cu-name{flex:1;font-size:14px;font-weight:600;color:var(--white);}
+.cu-role{font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:2px 7px;border-radius:10px;border:1px solid;font-weight:700;}
+.cu-role.pro{border-color:var(--pro);color:var(--pro);}
+.cu-role.officer{border-color:var(--off);color:var(--off);}
+.cu-role.crew{border-color:var(--crew);color:var(--crew);}
+
+/* History */
+.hist-item{padding:12px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;margin-bottom:10px;}
+.hist-hdr{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.hist-date{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--cal);}
+.hist-meta{flex:1;font-size:12px;color:var(--muted);}
+.hist-detail{display:none;margin-top:10px;border-top:1px solid var(--b1);padding-top:10px;}
+.hist-detail.open{display:block;}
+
+/* Export */
+.export-pre{background:var(--bg);border:1px solid var(--b1);border-radius:4px;padding:12px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text);white-space:pre-wrap;max-height:280px;overflow-y:auto;margin-bottom:12px;line-height:1.6;}
+
+/* overlay modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);}
+.overlay.hidden{display:none;}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:8px;padding:26px 22px;width:100%;max-width:380px;position:relative;}
+.modal h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--white);margin-bottom:16px;}
+.modal-x{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.pulsing{animation:pulse 1s ease infinite;}
+</style>
+</head>
+<body>
+
+<!-- ════════ LOGIN MODAL ════════ -->
+<div class="overlay hidden" id="login-modal">
+  <div class="modal">
+    <h2>OFFICER LOGIN</h2>
+    <button class="modal-x" onclick="closeModal('login-modal')">✕</button>
+    <input class="inp" id="login-pass" type="password" placeholder="Enter password" style="margin-bottom:8px"/>
+    <div style="color:var(--red);font-size:13px;display:none;margin-bottom:8px" id="login-err">Incorrect password.</div>
+    <button class="btn full solid-cal" onclick="doLogin()">LOGIN</button>
+  </div>
+</div>
+
+<!-- ════════ EXPORT MODAL ════════ -->
+<div class="overlay hidden" id="export-modal">
+  <div class="modal" style="max-width:460px">
+    <h2>EXPORT</h2>
+    <button class="modal-x" onclick="closeModal('export-modal')">✕</button>
+    <div class="export-pre" id="export-pre"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn cal" onclick="copyExport()">COPY TEXT</button>
+      <button class="btn" onclick="dlCSV()">CSV</button>
+      <button class="btn" onclick="shareExp()">SHARE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ DRAWERS ════════ -->
+<!-- Roster -->
+<div class="drawer hidden" id="roster-drawer">
+  <div class="drawer-bd" onclick="closeDrawer('roster-drawer')"></div>
+  <div class="drawer-panel">
+    <div class="dw-handle"></div>
+    <div class="dw-hdr"><h3>BOAT ROSTER</h3><button class="btn cal" id="roster-add-btn" onclick="rosterShowAdd()" style="display:none;font-size:12px;padding:7px 12px">+ ADD</button><button class="dw-close" onclick="closeDrawer('roster-drawer')">✕</button></div>
+    <div class="dw-tabs"><div class="dtab active" id="rtab-list" onclick="rosterTab('list')">ROSTER</div><div class="dtab" id="rtab-add" onclick="rosterTab('add')" style="display:none">ADD NEW</div></div>
+    <div class="dw-body" id="roster-body"></div>
+  </div>
+</div>
+<!-- Fleet -->
+<div class="drawer hidden" id="fleet-drawer">
+  <div class="drawer-bd" onclick="closeDrawer('fleet-drawer')"></div>
+  <div class="drawer-panel">
+    <div class="dw-handle"></div>
+    <div class="dw-hdr"><h3>FLEETS</h3><button class="btn cal" id="fleet-add-btn" onclick="fleetShowAdd()" style="display:none;font-size:12px;padding:7px 12px">+ ADD</button><button class="dw-close" onclick="closeDrawer('fleet-drawer')">✕</button></div>
+    <div class="dw-body" id="fleet-body"></div>
+  </div>
+</div>
+<!-- Users -->
+<div class="drawer hidden" id="users-drawer">
+  <div class="drawer-bd" onclick="closeDrawer('users-drawer')"></div>
+  <div class="drawer-panel">
+    <div class="dw-handle"></div>
+    <div class="dw-hdr"><h3>CREW ONLINE</h3><button class="dw-close" onclick="closeDrawer('users-drawer')">✕</button></div>
+    <div class="dw-body" id="users-body"></div>
+  </div>
+</div>
+<!-- History -->
+<div class="drawer hidden" id="history-drawer">
+  <div class="drawer-bd" onclick="closeDrawer('history-drawer')"></div>
+  <div class="drawer-panel">
+    <div class="dw-handle"></div>
+    <div class="dw-hdr"><h3>RACE HISTORY</h3><button class="dw-close" onclick="closeDrawer('history-drawer')">✕</button></div>
+    <div class="dw-body" id="history-body"></div>
+  </div>
+</div>
+<!-- Setup (PRO only) -->
+<div class="drawer hidden" id="setup-drawer">
+  <div class="drawer-bd" onclick="closeDrawer('setup-drawer')"></div>
+  <div class="drawer-panel">
+    <div class="dw-handle"></div>
+    <div class="dw-hdr"><h3>RACE SETUP</h3><button class="dw-close" onclick="closeDrawer('setup-drawer')">✕</button></div>
+    <div class="dw-body" id="setup-body"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     LANDING SCREEN
+════════════════════════════════ -->
+<div class="screen active" id="screen-land">
+  <div class="land-inner">
+    <div class="land-brand">
+      <h1>FINISH <em>LINE</em></h1>
+      <p>Race Committee Timer</p>
+    </div>
+    <div class="field" style="margin:0">
+      <label>Your Name</label>
+      <input class="inp" id="land-name" placeholder="Enter your name" maxlength="24"/>
+    </div>
+    <div class="land-sep">JOIN ROOM</div>
+    <input class="inp land-room-inp" id="land-room" placeholder="ROOM CODE" maxlength="8"/>
+    <div class="land-err" id="land-err">Room not found.</div>
+    <button class="btn full solid-cal" onclick="landJoin()" style="font-size:18px;padding:14px;letter-spacing:4px">JOIN RACE</button>
+    <div class="land-sep">OR</div>
+    <button class="btn full" onclick="openDrawer('history-drawer')" style="font-size:15px;padding:12px">📁 RACE HISTORY</button>
+    <button class="btn full solid-pro" id="create-race-btn" onclick="createRace()" style="display:none;font-size:18px;padding:14px;letter-spacing:4px">＋ CREATE RACE</button>
+    <div class="land-login-row">
+      <span>Race committee?</span>
+      <div class="role-badge crew" id="land-role-badge">👁 CREW</div>
+      <button class="btn" onclick="openModal('login-modal')" style="font-size:12px;padding:6px 12px" id="land-login-btn">LOGIN</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     CREW SCREEN
+════════════════════════════════ -->
+<div class="screen" id="screen-crew">
+  <div class="crew-wrap">
+    <div class="crew-topbar">
+      <h2>FINISH LINE</h2>
+      <div class="crew-room" id="crew-room-pill">——</div>
+      <button class="btn" onclick="openDrawer('users-drawer')" style="font-size:12px;padding:6px 10px">👥</button>
+    </div>
+    <div class="crew-clocks" id="crew-clocks">
+      <div class="crew-clock-box main">
+        <div class="cc-lbl" id="cc-lbl-cal">CAL-20 COUNTDOWN</div>
+        <div class="cc-val cdwn" id="cc-val-cal">--:--</div>
+      </div>
+      <div class="crew-clocks-row">
+        <div class="crew-clock-box">
+          <div class="cc-lbl" id="cc-lbl-phrf">PHRF COUNTDOWN</div>
+          <div class="cc-val cdwn" id="cc-val-phrf" style="font-size:36px">--:--</div>
+        </div>
+        <div class="crew-clock-box">
+          <div class="cc-lbl">CURRENT TIME</div>
+          <div class="cc-val wall" id="cc-wall">--:--:--</div>
+        </div>
+      </div>
+    </div>
+    <div class="crew-log" id="crew-log">
+      <div class="crew-log-title">RACE LOG</div>
+      <div id="crew-log-entries"><div style="color:var(--muted);font-size:12px;text-align:center;padding:10px">Waiting for race to start…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     OFFICER / PRO SCREEN
+════════════════════════════════ -->
+<div class="screen" id="screen-officer">
+  <div class="off-topbar">
+    <div class="off-topbar-inner">
+      <h2>FINISH LINE</h2>
+      <div class="role-badge crew" id="off-role-badge">👁 —</div>
+      <div class="wall-disp" id="off-wall">--:--:--</div>
+      <button class="btn" onclick="openDrawer('users-drawer')" style="font-size:12px;padding:6px 10px">👥</button>
+    </div>
+  </div>
+  <div class="clock-strip">
+    <div class="clock-strip-inner">
+      <div class="cs-cell">
+        <div class="cs-lbl" id="cs-lbl-cal">CAL-20</div>
+        <div class="cs-val cdwn" id="cs-val-cal">--:--</div>
+      </div>
+      <div class="cs-cell">
+        <div class="cs-lbl" id="cs-lbl-phrf">PHRF</div>
+        <div class="cs-val cdwn" id="cs-val-phrf">--:--</div>
+      </div>
+    </div>
+  </div>
+  <div class="off-body">
+    <div class="off-body-inner">
+      <!-- 4 stage slots -->
+      <div class="stage-grid" id="stage-grid">
+        <div class="stage-slot empty" id="slot-0"><div class="slot-empty-lbl">SLOT 1</div></div>
+        <div class="stage-slot empty" id="slot-1"><div class="slot-empty-lbl">SLOT 2</div></div>
+        <div class="stage-slot empty" id="slot-2"><div class="slot-empty-lbl">SLOT 3</div></div>
+        <div class="stage-slot empty" id="slot-3"><div class="slot-empty-lbl">SLOT 4</div></div>
+      </div>
+      <!-- Unified boat list -->
+      <div class="list-hdr">ACTIVE BOATS</div>
+      <div class="boat-list" id="off-boat-list"></div>
+      <!-- Log (collapsed) -->
+      <div style="margin-top:16px">
+        <div class="list-hdr" style="cursor:pointer" onclick="toggleOffLog()">RACE LOG <span id="off-log-toggle" style="color:var(--muted);font-size:12px;margin-left:auto">▾</span></div>
+        <div id="off-log-wrap" style="display:none">
+          <div class="full-log-wrap" id="off-log-entries"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <div class="bottom-bar-inner">
+      <button class="btn red" id="end-race-btn" style="display:none" onclick="endRace()">■ END RACE</button>
+      <button class="btn" id="setup-btn" style="display:none" onclick="openDrawer('setup-drawer')">⚙ SETUP</button>
+      <button class="btn" onclick="openDrawer('roster-drawer')" id="roster-btn" style="display:none">📋 ROSTER</button>
+      <button class="btn" onclick="openDrawer('fleet-drawer')" id="fleet-btn" style="display:none">⛵ FLEETS</button>
+      <button class="btn" onclick="openExport()" style="margin-left:auto;font-size:12px">EXPORT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     END RACE SCREEN
+════════════════════════════════ -->
+<div class="screen" id="screen-end">
+  <div class="end-wrap">
+    <div class="end-brand">
+      <h2>RACE COMPLETE</h2>
+      <p id="end-date">—</p>
+    </div>
+    <div id="end-results"></div>
+    <div class="divider"></div>
+    <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-weight:700">FULL RACE LOG</div>
+    <div class="full-log-wrap" id="end-log"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+      <button class="btn cal" onclick="openExport()">EXPORT RESULTS</button>
+      <button class="btn" onclick="backToLanding()">NEW RACE</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update, remove, onDisconnect }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const FC = {
+  apiKey:"AIzaSyC9bB8drtwUI8WRfM-oZeBLHTbX6G-jFdk",
+  authDomain:"finish-timer.firebaseapp.com",
+  databaseURL:"https://finish-timer-default-rtdb.firebaseio.com",
+  projectId:"finish-timer",
+  storageBucket:"finish-timer.firebasestorage.app",
+  messagingSenderId:"321590993811",
+  appId:"1:321590993811:web:a249d0b84e1e14953afe66"
+};
+const fbApp = initializeApp(FC);
+const db = getDatabase(fbApp);
+
+// ── Passwords ──
+const PASS_PRO = "1777";
+const PASS_OFF = "1932";
+
+// ── Session ──
+let myName = sessionStorage.getItem('fl_name') || '';
+let myRole = sessionStorage.getItem('fl_role') || 'crew';
+let myDevice = sessionStorage.getItem('fl_dev') || ('d'+Math.random().toString(36).slice(2,8));
+sessionStorage.setItem('fl_dev', myDevice);
+
+// ── App state ──
+let roomCode = null;
+let raceData = null;
+let rosterData = {};
+let fleetsData = {};
+let localSlots = [null, null, null, null]; // personal stage slots
+let timerInterval = null;
+let dragSrcId = null, dragSrcFleet = null;
+let touchBoat = null, touchClone = null;
+let swipeState = {}; // per boat swipe tracking (PRO only)
+
+const DEFAULT_FLEETS = [
+  {id:'cal20',name:'Cal-20',type:'one-design',color:'#00b4ff'},
+  {id:'phrf',name:'PHRF',type:'handicap',color:'#ff6b2b'}
+];
+
+// ── Expose globals (assigned after all functions defined at bottom) ──
+
+// ─────────────── INIT ───────────────
+function init() {
+  if (myName) document.getElementById('land-name').value = myName;
+  document.getElementById('land-name').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('land-room').focus(); });
+  document.getElementById('land-room').addEventListener('keydown', e => { if(e.key==='Enter') landJoin(); });
+  document.getElementById('land-room').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
+  document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  updateRoleBadges();
+  loadGlobalData();
+}
+
+function loadGlobalData() {
+  onValue(ref(db,'roster'), s => { rosterData = s.val()||{}; renderRosterDrawer(); });
+  onValue(ref(db,'fleets'), s => {
+    if (!s.exists()) { const fd={}; DEFAULT_FLEETS.forEach(f=>{fd[f.id]=f;}); set(ref(db,'fleets'),fd); }
+    else { fleetsData = s.val()||{}; renderFleetDrawer(); }
+  });
+  onValue(ref(db,'history'), s => { renderHistoryDrawer(s.val()||{}); });
+}
+
+// ─────────────── LANDING ───────────────
+async function landJoin() {
+  const name = document.getElementById('land-name').value.trim();
+  const code = document.getElementById('land-room').value.trim().toUpperCase();
+  const errEl = document.getElementById('land-err');
+  errEl.style.display = 'none';
+  if (!name) { alert('Please enter your name'); return; }
+  if (!code) { alert('Please enter a room code'); return; }
+  myName = name;
+  sessionStorage.setItem('fl_name', name);
+  const snap = await get(ref(db, `races/${code}`));
+  if (!snap.exists()) { errEl.style.display='block'; return; }
+  roomCode = code;
+  subscribeRace();
+  updatePresence();
+  if (myRole === 'crew') showScreen('crew');
+  else showScreen('officer');
+}
+
+// ─────────────── LOGIN ───────────────
+function doLogin() {
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-err');
+  if (pass === PASS_PRO) myRole = 'pro';
+  else if (pass === PASS_OFF) myRole = 'officer';
+  else { errEl.style.display='block'; return; }
+  errEl.style.display = 'none';
+  sessionStorage.setItem('fl_role', myRole);
+  closeModal('login-modal');
+  document.getElementById('login-pass').value = '';
+  updateRoleBadges();
+  // If already in a race, switch to officer view
+  if (roomCode) showScreen('officer');
+}
+
+function updateRoleBadges() {
+  const icons = {crew:'👁',officer:'⚓',pro:'⭐'};
+  const labels = {crew:'CREW',officer:'OFFICER',pro:'PRO'};
+  const txt = `${icons[myRole]} ${myName||'—'} <span style="opacity:.7;font-size:9px">${labels[myRole]}</span>`;
+  ['land-role-badge','off-role-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.className=`role-badge ${myRole}`; el.innerHTML=txt; }
+  });
+  const isOff = myRole==='officer'||myRole==='pro';
+  const isPro = myRole==='pro';
+  document.getElementById('land-login-btn').style.display = isOff ? 'none' : 'inline-flex';
+  document.getElementById('create-race-btn').style.display = isPro ? 'flex' : 'none';
+  document.getElementById('end-race-btn').style.display = isPro ? 'inline-flex' : 'none';
+  document.getElementById('setup-btn').style.display = isPro ? 'inline-flex' : 'none';
+  document.getElementById('roster-btn').style.display = isOff ? 'inline-flex' : 'none';
+  document.getElementById('fleet-btn').style.display = isOff ? 'inline-flex' : 'none';
+  document.getElementById('roster-add-btn').style.display = isOff ? 'inline-flex' : 'none';
+  document.getElementById('fleet-add-btn').style.display = isOff ? 'inline-flex' : 'none';
+}
+
+// ─────────────── SCREENS ───────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+  if (name==='crew') { updateCrewBadge(); }
+  if (name==='officer') { updateRoleBadges(); renderOfficerScreen(); }
+}
+
+function updateCrewBadge() {
+  document.getElementById('crew-room-pill').textContent = roomCode||'——';
+}
+
+// ─────────────── PRESENCE ───────────────
+function updatePresence() {
+  if (!roomCode||!myName) return;
+  const pr = ref(db,`races/${roomCode}/presence/${myDevice}`);
+  set(pr, {name:myName,role:myRole,ts:Date.now()});
+  onDisconnect(pr).remove();
+}
+
+// ─────────────── SUBSCRIBE ───────────────
+function subscribeRace() {
+  onValue(ref(db,`races/${roomCode}`), snap => {
+    if (!snap.exists()) return;
+    const prev = raceData;
+    raceData = snap.val();
+    // Check if race just ended
+    if (raceData.ended && (!prev||!prev.ended)) {
+      buildEndScreen();
+      showScreen('end');
+      return;
+    }
+    if (raceData.ended) return;
+    if (myRole==='crew') renderCrewScreen();
+    else renderOfficerScreen();
+    renderUsersDrawer();
+  });
+}
+
+// ─────────────── CLOCKS ───────────────
+function startTicker() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(tickAll, 500);
+  tickAll();
+}
+
+function tickAll() {
+  const now = new Date();
+  const ws = now.toLocaleTimeString('en-US',{hour12:false});
+  const wallEls = ['off-wall','cc-wall'];
+  wallEls.forEach(id => { const el=document.getElementById(id); if(el) el.textContent=ws; });
+
+  if (!raceData) return;
+  ['cal','phrf'].forEach(fleet => {
+    const iso = fleet==='cal' ? raceData.calStartISO : raceData.phrfStartISO;
+    if (!iso) return;
+    const diff = Math.floor((now - new Date(iso))/1000);
+    const label = fleet==='cal'?'CAL-20':'PHRF';
+    // Crew clocks
+    const ccVal = document.getElementById(`cc-val-${fleet}`);
+    const ccLbl = document.getElementById(`cc-lbl-${fleet}`);
+    // Officer clocks
+    const csVal = document.getElementById(`cs-val-${fleet}`);
+    const csLbl = document.getElementById(`cs-lbl-${fleet}`);
+    if (diff < 0) {
+      [ccVal,csVal].forEach(el => { if(el){el.className=(el===ccVal?'cc-val':'cs-val')+' cdwn'; el.textContent=fmtTime(diff,true);}});
+      [ccLbl,csLbl].forEach(el => { if(el) el.textContent=`${label} COUNTDOWN`; });
+    } else {
+      [ccVal,csVal].forEach(el => { if(el){el.className=(el===ccVal?'cc-val':'cs-val')+' run'; el.textContent=fmtTime(diff,false);}});
+      [ccLbl,csLbl].forEach(el => { if(el) el.textContent=`${label} ELAPSED`; });
+    }
+  });
+}
+
+function fmtTime(sec,sign) {
+  const neg=sec<0; const abs=Math.abs(sec);
+  const h=Math.floor(abs/3600),m=Math.floor((abs%3600)/60),s=abs%60;
+  const p=n=>String(n).padStart(2,'0');
+  return (neg&&sign?'−':'')+(h>0?`${p(h)}:${p(m)}:${p(s)}`:`${p(m)}:${p(s)}`);
+}
+
+function elapsedSec(fleet) {
+  const iso = fleet==='cal'?raceData?.calStartISO:raceData?.phrfStartISO;
+  if (!iso) return 0;
+  return Math.floor((Date.now()-new Date(iso))/1000);
+}
+
+function isStarted(fleet) { return elapsedSec(fleet)>=0; }
+
+// ─────────────── CREW RENDER ───────────────
+function renderCrewScreen() {
+  if (!raceData) return;
+  startTicker();
+  renderLogEntries('crew-log-entries', getAllLog());
+}
+
+// ─────────────── OFFICER RENDER ───────────────
+function renderOfficerScreen() {
+  if (!raceData) return;
+  startTicker();
+  renderSlots();
+  renderBoatList();
+  renderLogEntries('off-log-entries', getAllLog());
+}
+
+function getAllLog() {
+  if (!raceData) return [];
+  const cal = (raceData.cal?.log||[]).map(e=>({...e,fleet:'cal'}));
+  const phrf = (raceData.phrf?.log||[]).map(e=>({...e,fleet:'phrf'}));
+  return [...cal,...phrf].sort((a,b)=>b.ts-a.ts);
+}
+
+function renderLogEntries(elId, entries) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (!entries.length) { el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:8px">No events yet</div>'; return; }
+  el.innerHTML = entries.slice(0,40).map(e=>`
+    <div class="log-entry">
+      <div class="le-time">${e.clock||''}</div>
+      <div class="le-txt ${e.type||''}">${e.txt}</div>
+    </div>`).join('');
+}
+
+// ─────────────── STAGE SLOTS ───────────────
+function renderSlots() {
+  for (let i=0;i<4;i++) {
+    const slot = document.getElementById(`slot-${i}`);
+    const boat = localSlots[i];
+    // Set up drag target
+    slot.ondragover = e => stageDragOver(e,i);
+    slot.ondragleave = e => stageDragLeave(e);
+    slot.ondrop = e => stageDrop(e,i);
+    if (!boat) {
+      slot.className='stage-slot empty';
+      slot.innerHTML=`<div class="slot-empty-lbl">SLOT ${i+1}</div>`;
+    } else {
+      const fleet = boat.fleet;
+      const started = isStarted(fleet);
+      slot.className=`stage-slot filled ${fleet}-slot`;
+      slot.innerHTML=`<div class="slot-inner">
+        <div class="slot-fleet-tag ${fleet}">${fleet==='cal'?'CAL-20':'PHRF'}</div>
+        <div class="slot-name">${boat.name}</div>
+        <div class="slot-sail">${boat.sail}${fleet==='phrf'&&boat.phrf!=null?` · PHRF ${boat.phrf}`:''}</div>
+        <div class="slot-actions">
+          <button class="finish-btn ${fleet}-fb" onclick="tapFinish(${i})" ${!started?'disabled':''}>FINISH</button>
+          <button class="unstage-btn" onclick="unstageBoat(${i})">✕</button>
+        </div>
+      </div>`;
+    }
+  }
+}
+
+function stageBoat(fleet, id) {
+  const emptyIdx = localSlots.findIndex(s=>s===null);
+  if (emptyIdx<0) { alert('All 4 slots are full. Unstage a boat first.'); return; }
+  if (localSlots.find(s=>s&&String(s.id)===String(id))) return; // already staged
+  const fd = raceData?.[fleet];
+  const boats = fd?.boats ? Object.values(fd.boats) : [];
+  const boat = boats.find(b=>String(b.id)===String(id));
+  if (!boat) return;
+  localSlots[emptyIdx] = {...boat, fleet};
+  renderSlots();
+  renderBoatList();
+}
+
+function unstageBoat(slotIdx) {
+  localSlots[slotIdx] = null;
+  renderSlots();
+  renderBoatList();
+}
+
+// ─────────────── FINISH ───────────────
+async function tapFinish(slotIdx) {
+  const boat = localSlots[slotIdx];
+  if (!boat) return;
+  const fleet = boat.fleet;
+  if (!isStarted(fleet)) return;
+  const now = new Date();
+  const es = elapsedSec(fleet);
+  const clockTime = now.toLocaleTimeString('en-US',{hour12:false});
+  const fd = raceData[fleet];
+  const finished = [...(fd.finished||[])];
+  const place = finished.length+1;
+  finished.push({...boat, place, elapsedSec:es, clockTime, who:myName, ts:now.getTime()});
+  const log = [...(fd.log||[])];
+  log.push({type:'finish',txt:`✓ ${boat.name} finished — Place ${place} — ${fmtTime(es,false)} — ${myName}`,who:myName,ts:now.getTime(),clock:clockTime});
+  await update(ref(db,`races/${roomCode}/${fleet}`),{finished,log});
+  // Clear slot locally only
+  localSlots[slotIdx] = null;
+  renderSlots();
+  renderBoatList();
+}
+
+// ─────────────── BOAT LIST ───────────────
+function renderBoatList() {
+  if (!raceData) return;
+  const el = document.getElementById('off-boat-list');
+  const isOff = myRole==='officer'||myRole==='pro';
+  const isPro = myRole==='pro';
+
+  // Gather all boats from both fleets
+  const allBoats = [];
+  ['cal','phrf'].forEach(fleet => {
+    const fd = raceData[fleet];
+    if (!fd?.boats) return;
+    const finished = (fd.finished||[]).map(f=>String(f.id));
+    Object.values(fd.boats).forEach(b => {
+      if (!finished.includes(String(b.id))) allBoats.push({...b,fleet});
+    });
+  });
+  allBoats.sort((a,b)=>a.order-b.order);
+
+  const stagedIds = new Set(localSlots.filter(Boolean).map(s=>String(s.id)));
+  const ocsIds = new Set([
+    ...(raceData.cal?.ocsBoats||[]),
+    ...(raceData.phrf?.ocsBoats||[])
+  ].map(String));
+
+  if (!allBoats.length) { el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">All boats finished</div>'; return; }
+
+  el.innerHTML = allBoats.map(b => {
+    const isOcs = ocsIds.has(String(b.id));
+    const isStaged = stagedIds.has(String(b.id));
+    const slotsFull = localSlots.every(s=>s!==null);
+    return `<div class="boat-row${isOcs?' ocs-on':''}" data-id="${b.id}" data-fleet="${b.fleet}"
+      draggable="${isOff}"
+      ondragstart="${isOff?'raceDragStart(event)':''}"
+      ondragover="${isOff?'raceDragOver(event)':''}"
+      ondragleave="${isOff?'raceDragLeave(event)':''}"
+      ondrop="${isOff?'raceDrop(event)':''}">
+      <span class="dh${isOff?'':' locked'}" ontouchstart="${isOff?'touchDragStart(event)':''}">⠿</span>
+      <div class="br-info">
+        <div class="br-name">${b.name}${isOcs?'<span class="ocs-badge">OCS</span>':''}</div>
+        <div class="br-sub">
+          <span class="fleet-tag ${b.fleet}">${b.fleet==='cal'?'CAL-20':'PHRF'}</span>
+          ${b.sail}${b.fleet==='phrf'&&b.phrf!=null?` · PHRF ${b.phrf}`:''}
+        </div>
+      </div>
+      ${isOff?`<button class="stage-big-btn ${b.fleet}" onclick="stageBoat('${b.fleet}','${b.id}')"
+        ${isStaged||slotsFull?'disabled':''}>STAGE</button>`:''}
+      ${isPro?`<div class="ocs-reveal${isOcs?' clr-ocs-reveal':''}" id="ocsr-${b.id}"
+        onclick="${isOcs?`clearOCS('${b.fleet}','${b.id}')`:`tapOCS('${b.fleet}','${b.id}')`}">
+        ${isOcs?'CLR OCS':'OCS'}</div>`:''}
+    </div>`;
+  }).join('');
+
+  // Wire swipe for PRO OCS
+  if (isPro) {
+    allBoats.forEach(b => {
+      const row = el.querySelector(`[data-id="${b.id}"]`);
+      if (row) wireSwipe(row, b.id);
+    });
+  }
+}
+
+// ─────────────── SWIPE FOR OCS (PRO) ───────────────
+function wireSwipe(row, boatId) {
+  let startX = 0, curX = 0, swiping = false;
+  const reveal = document.getElementById(`ocsr-${boatId}`);
+  if (!reveal) return;
+
+  row.addEventListener('touchstart', e => {
+    if (e.target.closest('.dh')) return; // let drag handle do its thing
+    startX = e.touches[0].clientX;
+    swiping = true;
+  }, {passive:true});
+
+  row.addEventListener('touchmove', e => {
+    if (!swiping) return;
+    curX = e.touches[0].clientX;
+    const dx = startX - curX;
+    if (dx > 30) { reveal.classList.add('show'); }
+    else if (dx < -10) { reveal.classList.remove('show'); }
+  }, {passive:true});
+
+  row.addEventListener('touchend', () => { swiping=false; });
+}
+
+// ─────────────── OCS ───────────────
+async function tapOCS(fleet, boatId) {
+  const fd = raceData[fleet];
+  const boats = fd?.boats?Object.values(fd.boats):[];
+  const boat = boats.find(b=>String(b.id)===String(boatId));
+  const ocsBoats = [...(fd.ocsBoats||[]),String(boatId)];
+  const log = [...(fd.log||[])];
+  const now = new Date();
+  log.push({type:'ocs',txt:`OCS — ${boat?.name||boatId} — called by ${myName}`,who:myName,ts:now.getTime(),clock:now.toLocaleTimeString('en-US',{hour12:false})});
+  await update(ref(db,`races/${roomCode}/${fleet}`),{ocsBoats,log});
+}
+
+async function clearOCS(fleet, boatId) {
+  const fd = raceData[fleet];
+  const ocsBoats = (fd.ocsBoats||[]).filter(id=>id!==String(boatId));
+  const boats = fd?.boats?Object.values(fd.boats):[];
+  const boat = boats.find(b=>String(b.id)===String(boatId));
+  const log = [...(fd.log||[])];
+  const now = new Date();
+  log.push({type:'ocs',txt:`OCS CLEARED — ${boat?.name||boatId} — by ${myName}`,who:myName,ts:now.getTime(),clock:now.toLocaleTimeString('en-US',{hour12:false})});
+  await update(ref(db,`races/${roomCode}/${fleet}`),{ocsBoats,log});
+}
+
+// ─────────────── DRAG REORDER ───────────────
+function raceDragStart(e) {
+  dragSrcId=e.currentTarget.dataset.id;
+  dragSrcFleet=e.currentTarget.dataset.fleet;
+  e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>e.currentTarget.classList.add('dragging'),0);
+}
+function raceDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function raceDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+async function raceDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  document.querySelectorAll('.dragging').forEach(el=>el.classList.remove('dragging'));
+  const toId=e.currentTarget.dataset.id;
+  if (!dragSrcId||dragSrcId===toId) return;
+  // Reorder across both fleets (global order)
+  const allBoats = [];
+  ['cal','phrf'].forEach(fleet=>{
+    const fd=raceData[fleet];
+    if (fd?.boats) Object.values(fd.boats).forEach(b=>allBoats.push({...b,fleet}));
+  });
+  allBoats.sort((a,b)=>a.order-b.order);
+  const fi=allBoats.findIndex(b=>String(b.id)===String(dragSrcId));
+  const ti=allBoats.findIndex(b=>String(b.id)===String(toId));
+  if (fi<0||ti<0) return;
+  const [moved]=allBoats.splice(fi,1); allBoats.splice(ti,0,moved);
+  // Write back per fleet
+  const updates = {cal:{...raceData.cal,boats:{...raceData.cal?.boats}},phrf:{...raceData.phrf,boats:{...raceData.phrf?.boats}}};
+  allBoats.forEach((b,i)=>{
+    if (updates[b.fleet]?.boats?.[b.id]) updates[b.fleet].boats[b.id] = {...updates[b.fleet].boats[b.id],order:i};
+  });
+  await update(ref(db,`races/${roomCode}/cal`),{boats:updates.cal.boats});
+  await update(ref(db,`races/${roomCode}/phrf`),{boats:updates.phrf.boats});
+  dragSrcId=null; dragSrcFleet=null;
+}
+
+// Stage zone drag
+function stageDragOver(e,idx) { e.preventDefault(); document.getElementById(`slot-${idx}`).classList.add('drag-over'); }
+function stageDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function stageDrop(e,idx) {
+  e.preventDefault();
+  document.getElementById(`slot-${idx}`).classList.remove('drag-over');
+  if (!dragSrcId||!dragSrcFleet) return;
+  if (localSlots[idx]) return; // slot occupied
+  const fd=raceData[dragSrcFleet];
+  const boats=fd?.boats?Object.values(fd.boats):[];
+  const boat=boats.find(b=>String(b.id)===String(dragSrcId));
+  if (!boat) return;
+  if (localSlots.find(s=>s&&String(s.id)===String(dragSrcId))) return;
+  localSlots[idx]={...boat,fleet:dragSrcFleet};
+  renderSlots();
+  renderBoatList();
+  dragSrcId=null; dragSrcFleet=null;
+}
+
+// Touch drag (mobile)
+function touchDragStart(e) {
+  const row=e.currentTarget.closest('.boat-row');
+  if (!row) return;
+  dragSrcId=row.dataset.id; dragSrcFleet=row.dataset.fleet;
+  touchBoat=row;
+  touchClone=row.cloneNode(true);
+  const r=row.getBoundingClientRect();
+  touchClone.style.cssText=`position:fixed;opacity:.7;pointer-events:none;z-index:9999;width:${r.width}px;left:${r.left}px;top:${r.top}px;border-radius:6px;`;
+  document.body.appendChild(touchClone);
+}
+document.addEventListener('touchmove', e=>{
+  if (!touchClone) return;
+  const t=e.touches[0];
+  touchClone.style.left=`${t.clientX-touchClone.offsetWidth/2}px`;
+  touchClone.style.top=`${t.clientY-40}px`;
+},{passive:true});
+document.addEventListener('touchend', async e=>{
+  if (!touchClone) return;
+  touchClone.remove(); touchClone=null;
+  if (!touchBoat||!dragSrcId) return;
+  const t=e.changedTouches[0];
+  // Check stage slot
+  const slotEl=document.elementFromPoint(t.clientX,t.clientY)?.closest('.stage-slot');
+  if (slotEl) {
+    const idx=parseInt(slotEl.id.split('-')[1]);
+    if (!isNaN(idx)&&!localSlots[idx]) {
+      const fd=raceData[dragSrcFleet];
+      const boats=fd?.boats?Object.values(fd.boats):[];
+      const boat=boats.find(b=>String(b.id)===String(dragSrcId));
+      if (boat&&!localSlots.find(s=>s&&String(s.id)===String(dragSrcId))) {
+        localSlots[idx]={...boat,fleet:dragSrcFleet};
+        renderSlots(); renderBoatList();
+      }
+    }
+  } else {
+    // Reorder
+    const target=document.elementFromPoint(t.clientX,t.clientY)?.closest('.boat-row');
+    if (target&&target!==touchBoat) {
+      const toId=target.dataset.id;
+      const allBoats=[];
+      ['cal','phrf'].forEach(fleet=>{
+        const fd=raceData[fleet];
+        if (fd?.boats) Object.values(fd.boats).forEach(b=>allBoats.push({...b,fleet}));
+      });
+      allBoats.sort((a,b)=>a.order-b.order);
+      const fi=allBoats.findIndex(b=>String(b.id)===String(dragSrcId));
+      const ti=allBoats.findIndex(b=>String(b.id)===String(toId));
+      if (fi>=0&&ti>=0) {
+        const [moved]=allBoats.splice(fi,1); allBoats.splice(ti,0,moved);
+        const ub={cal:{...raceData.cal?.boats},phrf:{...raceData.phrf?.boats}};
+        allBoats.forEach((b,i)=>{ if(ub[b.fleet]?.[b.id]) ub[b.fleet][b.id]={...ub[b.fleet][b.id],order:i}; });
+        await update(ref(db,`races/${roomCode}/cal`),{boats:ub.cal});
+        await update(ref(db,`races/${roomCode}/phrf`),{boats:ub.phrf});
+      }
+    }
+  }
+  touchBoat=null; dragSrcId=null; dragSrcFleet=null;
+});
+
+// ─────────────── LOG TOGGLE ───────────────
+function toggleOffLog() {
+  const w=document.getElementById('off-log-wrap');
+  const t=document.getElementById('off-log-toggle');
+  const open=w.style.display==='none';
+  w.style.display=open?'block':'none';
+  t.textContent=open?'▴':'▾';
+}
+
+// ─────────────── END RACE ───────────────
+async function endRace() {
+  if (!confirm('End race and show results to all users?')) return;
+  if (timerInterval) clearInterval(timerInterval);
+  const now = new Date();
+  const log = [...(raceData.cal?.log||[]),...(raceData.phrf?.log||[])];
+  log.push({type:'end',txt:`Race ended by ${myName}`,who:myName,ts:now.getTime(),clock:now.toLocaleTimeString('en-US',{hour12:false})});
+  await update(ref(db,`races/${roomCode}`),{ended:true,endedAt:now.getTime(),endedBy:myName});
+  // Archive
+  const archKey=`race_${Date.now()}`;
+  await set(ref(db,`history/${archKey}`),{...raceData,ended:true,endedAt:now.getTime(),archivedBy:myName});
+  buildEndScreen();
+  showScreen('end');
+}
+
+function buildEndScreen() {
+  if (!raceData) return;
+  document.getElementById('end-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const resEl=document.getElementById('end-results');
+  let html='';
+  ['cal','phrf'].forEach(fleet=>{
+    const fd=raceData[fleet];
+    const finished=fd?.finished||[];
+    if (!finished.length) return;
+    html+=`<div class="results-fleet-hdr ${fleet==='cal'?'':''}" style="color:${fleet==='cal'?'var(--cal)':'var(--phrf)'}">
+      <div class="rfdot" style="background:${fleet==='cal'?'var(--cal)':'var(--phrf)'}"></div>
+      ${fleet==='cal'?'CAL-20':'PHRF'} FLEET
+    </div>`;
+    html+=finished.map(f=>{
+      const pc=f.place<=3?`p${f.place}`:'pn';
+      let corr='';
+      if (fleet==='phrf'&&raceData.raceDist&&f.phrf!=null) {
+        const cs=f.elapsedSec-(f.phrf*raceData.raceDist);
+        corr=`<div class="res-corr">${cs<0?'−':''}${fmtTime(Math.abs(cs),false)} corr.</div>`;
+      }
+      return `<div class="result-row">
+        <div class="place-b ${pc}">${f.place}</div>
+        <div class="res-info"><div class="res-name">${f.boatName||f.name||'—'}</div><div class="res-sub">${f.sail||''}${fleet==='phrf'&&f.phrf!=null?` · PHRF ${f.phrf}`:''}</div></div>
+        <div class="res-times"><div class="res-elapsed">${fmtTime(f.elapsedSec,false)}</div>${corr}<div class="res-clock">${f.clockTime||''}</div></div>
+      </div>`;
+    }).join('');
+  });
+  resEl.innerHTML=html||'<div style="color:var(--muted);text-align:center;padding:20px">No finishes recorded</div>';
+  const allLog=[...(raceData.cal?.log||[]),...(raceData.phrf?.log||[])].sort((a,b)=>a.ts-b.ts);
+  renderLogEntries('end-log',allLog);
+}
+
+function backToLanding() {
+  if (timerInterval) clearInterval(timerInterval);
+  roomCode=null; raceData=null; localSlots=[null,null,null,null];
+  showScreen('land');
+}
+
+// ─────────────── SETUP DRAWER (PRO) ───────────────
+function renderSetupDrawer() {
+  const el=document.getElementById('setup-body');
+  const raceExists=!!raceData;
+  el.innerHTML=`
+    <div style="font-size:13px;color:var(--muted);margin-bottom:14px">${raceExists?'Race in progress. You can start a new race by resetting.':'Configure and start a new race.'}</div>
+    ${raceExists?`<button class="btn red full" onclick="resetRace()" style="margin-bottom:14px">RESET RACE</button>`:''}
+    <div class="field"><label>Cal-20 Start Time</label><input class="inp" type="datetime-local" id="su-cal-start"/></div>
+    <div class="field"><label>PHRF Start Time</label><input class="inp" type="datetime-local" id="su-phrf-start"/></div>
+    <div class="field"><label>Race Distance (NM)</label><input class="inp" type="number" id="su-dist" value="${raceData?.raceDist||10}" min="0.1" step="0.1"/></div>
+    <div style="margin-bottom:10px">
+      <div class="list-hdr" style="margin-bottom:8px">CAL-20 BOATS</div>
+      <div id="su-cal-list"></div>
+      <div style="display:grid;grid-template-columns:1fr 80px auto;gap:6px;margin-top:8px">
+        <input class="inp" id="su-cal-name" placeholder="Name" style="padding:8px 10px"/>
+        <input class="inp" id="su-cal-sail" placeholder="Sail #" style="padding:8px 10px"/>
+        <button class="btn cal" onclick="suAddBoat('cal')" style="padding:8px 12px">ADD</button>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="list-hdr" style="margin-bottom:8px">PHRF BOATS</div>
+      <div id="su-phrf-list"></div>
+      <div style="display:grid;grid-template-columns:1fr 70px 60px auto;gap:6px;margin-top:8px">
+        <input class="inp" id="su-phrf-name" placeholder="Name" style="padding:8px 10px"/>
+        <input class="inp" id="su-phrf-sail" placeholder="Sail" style="padding:8px 10px"/>
+        <input class="inp" type="number" id="su-phrf-rating" placeholder="PHRF" style="padding:8px 10px"/>
+        <button class="btn phrf" onclick="suAddBoat('phrf')" style="padding:8px 12px">ADD</button>
+      </div>
+    </div>
+    <button class="btn solid-green full" onclick="suStartRace()" style="font-size:18px;padding:14px;letter-spacing:4px">▶ START RACE</button>
+    <div style="color:var(--red);font-size:12px;margin-top:8px;display:none" id="su-err"></div>
+  `;
+  setDefaultTimes();
+  suRenderBoats('cal');
+  suRenderBoats('phrf');
+}
+
+let suBoats={cal:[],phrf:[]};
+function suRenderBoats(fleet) {
+  const el=document.getElementById(`su-${fleet}-list`);
+  if (!el) return;
+  el.innerHTML=suBoats[fleet].map(b=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--s2);border:1px solid var(--b1);border-radius:4px;margin-bottom:6px">
+      <span style="flex:1;font-weight:700;color:var(--white);font-size:13px">${b.name}</span>
+      <span style="color:var(--muted);font-size:12px">${b.sail}</span>
+      ${fleet==='phrf'?`<span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--phrf)">${b.phrf}</span>`:''}
+      <button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:15px" onclick="suRemoveBoat('${fleet}','${b.id}')">✕</button>
+    </div>`).join('');
+}
+
+window.suAddBoat=function(fleet){
+  const name=document.getElementById(`su-${fleet}-name`).value.trim();
+  const sail=document.getElementById(`su-${fleet}-sail`).value.trim();
+  if(!name||!sail){alert('Name and sail # required');return;}
+  let phrf=null;
+  if(fleet==='phrf'){phrf=parseInt(document.getElementById('su-phrf-rating').value);if(isNaN(phrf)){alert('PHRF required');return;}}
+  const id=`b${Date.now()}${Math.floor(Math.random()*9000+1000)}`;
+  suBoats[fleet].push({id,name,sail,phrf,order:suBoats[fleet].length});
+  document.getElementById(`su-${fleet}-name`).value='';
+  document.getElementById(`su-${fleet}-sail`).value='';
+  if(fleet==='phrf')document.getElementById('su-phrf-rating').value='';
+  suRenderBoats(fleet);
+};
+window.suRemoveBoat=function(fleet,id){suBoats[fleet]=suBoats[fleet].filter(b=>b.id!==id);suRenderBoats(fleet);};
+window.suStartRace=async function(){
+  const errEl=document.getElementById('su-err');
+  errEl.style.display='none';
+  if(!suBoats.cal.length&&!suBoats.phrf.length){errEl.textContent='Add boats first.';errEl.style.display='block';return;}
+  const calS=document.getElementById('su-cal-start').value;
+  const phrfS=document.getElementById('su-phrf-start').value;
+  const dist=parseFloat(document.getElementById('su-dist').value);
+  if(!calS||!phrfS){errEl.textContent='Set both start times.';errEl.style.display='block';return;}
+  const race={
+    calStartISO:new Date(calS).toISOString(),
+    phrfStartISO:new Date(phrfS).toISOString(),
+    raceDist:isNaN(dist)?10:dist,
+    startedBy:myName,startedAt:Date.now(),
+    cal:{boats:{},finished:[],ocsBoats:[],log:[{type:'start',txt:`CAL-20 race started by ${myName}`,who:myName,ts:Date.now(),clock:new Date().toLocaleTimeString('en-US',{hour12:false})}]},
+    phrf:{boats:{},finished:[],ocsBoats:[],log:[{type:'start',txt:`PHRF race started by ${myName}`,who:myName,ts:Date.now(),clock:new Date().toLocaleTimeString('en-US',{hour12:false})}]},
+    presence:{}
+  };
+  suBoats.cal.forEach((b,i)=>{race.cal.boats[b.id]={...b,order:i};});
+  suBoats.phrf.forEach((b,i)=>{race.phrf.boats[b.id]={...b,order:i};});
+  await set(ref(db,`races/${roomCode}`),race);
+  closeDrawer('setup-drawer');
+  suBoats={cal:[],phrf:[]};
+  updatePresence();
+};
+window.resetRace=async function(){
+  if(!confirm('Reset race? All current data will be cleared.'))return;
+  if(timerInterval)clearInterval(timerInterval);
+  localSlots=[null,null,null,null];
+  await set(ref(db,`races/${roomCode}`),{presence:{}});
+  renderSetupDrawer();
+};
+
+function setDefaultTimes() {
+  const d1=new Date(Date.now()+5*60000);d1.setSeconds(0,0);
+  const d2=new Date(Date.now()+10*60000);d2.setSeconds(0,0);
+  const fmt=d=>{const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;};
+  const c=document.getElementById('su-cal-start');
+  const ph=document.getElementById('su-phrf-start');
+  if(c)c.value=fmt(d1);
+  if(ph)ph.value=fmt(d2);
+}
+
+// ─────────────── USERS ───────────────
+function renderUsersDrawer() {
+  const el=document.getElementById('users-body');
+  const presence=raceData?.presence||{};
+  const users=Object.values(presence);
+  if(!users.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No one online yet</div>';return;}
+  const icons={crew:'👁',officer:'⚓',pro:'⭐'};
+  el.innerHTML=users.map(u=>`<div class="cu-item"><div class="cu-dot"></div><div class="cu-name">${icons[u.role]||'👁'} ${u.name}</div><div class="cu-role ${u.role}">${u.role.toUpperCase()}</div></div>`).join('');
+}
+
+// ─────────────── ROSTER ───────────────
+let rosterCurTab='list'; let rosterEditId=null;
+function rosterTab(tab){
+  rosterCurTab=tab;
+  document.querySelectorAll('.dtab').forEach(el=>el.classList.remove('active'));
+  document.getElementById(`rtab-${tab}`)?.classList.add('active');
+  renderRosterDrawer();
+}
+function rosterShowAdd(){rosterTab('add');}
+function renderRosterDrawer(){
+  const el=document.getElementById('roster-body');
+  const isOff=myRole==='officer'||myRole==='pro';
+  if(rosterCurTab==='add'&&isOff){
+    el.innerHTML=`
+      <div class="field"><label>Boat Name</label><input class="inp" id="rn-name" placeholder="Boat name"/></div>
+      <div class="field"><label>Sail #</label><input class="inp" id="rn-sail" placeholder="Sail number"/></div>
+      <div class="field"><label>PHRF Rating (optional)</label><input class="inp" type="number" id="rn-phrf" placeholder="e.g. 132"/></div>
+      <button class="btn full cal" onclick="saveRosterBoat()" style="margin-top:4px">SAVE TO ROSTER</button>
+      <button class="btn full" onclick="rosterTab('list')" style="margin-top:8px">← BACK</button>`;
+    return;
+  }
+  const boats=Object.values(rosterData);
+  if(!boats.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No boats yet</div>';return;}
+  el.innerHTML=boats.map(b=>`
+    <div class="ri" id="ri-${b.id}">
+      <div class="ri-info"><div class="ri-name">${b.name}</div><div class="ri-sub">${b.sail}${b.phrf!=null?` · PHRF ${b.phrf}`:''}</div></div>
+      <div class="ri-acts">
+        <button class="sm-btn cal" onclick="addRosterToSetup('cal','${b.id}')">+CAL</button>
+        <button class="sm-btn phrf" onclick="addRosterToSetup('phrf','${b.id}')">+PHRF</button>
+        ${isOff?`<button class="sm-btn edit" onclick="editRosterBoat('${b.id}')">EDIT</button><button class="sm-btn del" onclick="deleteRosterBoat('${b.id}')">DEL</button>`:''}
+      </div>
+    </div>
+    ${rosterEditId===b.id?`<div class="edit-form">
+      <input class="inp" id="re-name-${b.id}" value="${b.name}" style="margin-bottom:6px"/>
+      <input class="inp" id="re-sail-${b.id}" value="${b.sail}" style="margin-bottom:6px"/>
+      <input class="inp" type="number" id="re-phrf-${b.id}" value="${b.phrf!=null?b.phrf:''}" placeholder="PHRF" style="margin-bottom:8px"/>
+      <div style="display:flex;gap:8px"><button class="btn cal" onclick="saveRosterEdit('${b.id}')">SAVE</button><button class="btn" onclick="cancelRosterEdit()">CANCEL</button></div>
+    </div>`:''}
+  `).join('');
+}
+function saveRosterBoat(){
+  const name=document.getElementById('rn-name').value.trim();
+  const sail=document.getElementById('rn-sail').value.trim();
+  const pv=document.getElementById('rn-phrf').value;
+  const phrf=pv?parseInt(pv):null;
+  if(!name||!sail){alert('Name and sail # required');return;}
+  const id=`r${Date.now()}${Math.floor(Math.random()*9000+1000)}`;
+  set(ref(db,`roster/${id}`),{id,name,sail,phrf});
+  rosterTab('list');
+}
+function editRosterBoat(id){rosterEditId=id;renderRosterDrawer();}
+function cancelRosterEdit(){rosterEditId=null;renderRosterDrawer();}
+function saveRosterEdit(id){
+  const name=document.getElementById(`re-name-${id}`).value.trim();
+  const sail=document.getElementById(`re-sail-${id}`).value.trim();
+  const pv=document.getElementById(`re-phrf-${id}`).value;
+  const phrf=pv?parseInt(pv):null;
+  if(!name||!sail){alert('Required');return;}
+  update(ref(db,`roster/${id}`),{name,sail,phrf});
+  rosterEditId=null;
+}
+function deleteRosterBoat(id){if(!confirm('Remove from roster?'))return;remove(ref(db,`roster/${id}`));}
+function addRosterToSetup(fleet,id){
+  const b=rosterData[id];if(!b)return;
+  const nb={id:`b${Date.now()}${Math.floor(Math.random()*9000+1000)}`,name:b.name,sail:b.sail,phrf:b.phrf||null,order:suBoats[fleet].length};
+  suBoats[fleet].push(nb);
+  openDrawer('setup-drawer');
+  suRenderBoats(fleet);
+}
+
+// ─────────────── FLEETS ───────────────
+let fleetEditId=null;
+function fleetShowAdd(){renderFleetAddForm();}
+function renderFleetAddForm(){
+  const el=document.getElementById('fleet-body');
+  el.innerHTML=`
+    <div class="field"><label>Fleet Name</label><input class="inp" id="fn-name" placeholder="e.g. Catalina 22"/></div>
+    <div class="field"><label>Type</label><select class="inp" id="fn-type"><option value="one-design">One Design</option><option value="handicap">Handicap (PHRF)</option></select></div>
+    <button class="btn full cal" onclick="saveNewFleet()" style="margin-top:4px">SAVE FLEET</button>
+    <button class="btn full" onclick="renderFleetDrawer()" style="margin-top:8px">← BACK</button>`;
+}
+function renderFleetDrawer(){
+  const el=document.getElementById('fleet-body');
+  const isOff=myRole==='officer'||myRole==='pro';
+  const fleets=Object.values(fleetsData);
+  if(!fleets.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No fleets</div>';return;}
+  el.innerHTML=fleets.map(f=>`
+    <div class="ri">
+      <div style="width:10px;height:10px;border-radius:50%;background:${f.color||'#888'};flex-shrink:0"></div>
+      <div class="ri-info"><div class="ri-name">${f.name}</div><div class="ri-sub">${f.type}</div></div>
+      ${isOff?`<div class="ri-acts"><button class="sm-btn edit" onclick="editFleet('${f.id}')">EDIT</button><button class="sm-btn del" onclick="deleteFleet('${f.id}')">DEL</button></div>`:''}
+    </div>
+    ${fleetEditId===f.id?`<div class="edit-form">
+      <input class="inp" id="fe-name-${f.id}" value="${f.name}" style="margin-bottom:6px"/>
+      <select class="inp" id="fe-type-${f.id}" style="margin-bottom:8px"><option value="one-design" ${f.type==='one-design'?'selected':''}>One Design</option><option value="handicap" ${f.type==='handicap'?'selected':''}>Handicap</option></select>
+      <div style="display:flex;gap:8px"><button class="btn cal" onclick="saveFleetEdit('${f.id}')">SAVE</button><button class="btn" onclick="cancelFleetEdit()">CANCEL</button></div>
+    </div>`:''}
+  `).join('');
+}
+function saveNewFleet(){
+  const name=document.getElementById('fn-name').value.trim();
+  const type=document.getElementById('fn-type').value;
+  if(!name){alert('Name required');return;}
+  const id=`f${Date.now()}`;
+  const colors=['#00b4ff','#ff6b2b','#00e676','#c084fc','#ffd700','#f43f5e'];
+  const color=colors[Object.keys(fleetsData).length%colors.length];
+  set(ref(db,`fleets/${id}`),{id,name,type,color});
+  renderFleetDrawer();
+}
+function editFleet(id){fleetEditId=id;renderFleetDrawer();}
+function cancelFleetEdit(){fleetEditId=null;renderFleetDrawer();}
+function saveFleetEdit(id){
+  const name=document.getElementById(`fe-name-${id}`).value.trim();
+  const type=document.getElementById(`fe-type-${id}`).value;
+  if(!name){alert('Required');return;}
+  update(ref(db,`fleets/${id}`),{name,type});
+  fleetEditId=null;
+}
+function deleteFleet(id){if(!confirm('Delete fleet?'))return;remove(ref(db,`fleets/${id}`));}
+
+// ─────────────── HISTORY ───────────────
+function renderHistoryDrawer(history){
+  const el=document.getElementById('history-body');
+  const races=Object.entries(history).sort((a,b)=>b[1].endedAt-a[1].endedAt);
+  if(!races.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No archived races yet</div>';return;}
+  el.innerHTML=races.map(([key,r])=>`
+    <div class="hist-item">
+      <div class="hist-hdr" onclick="toggleHistDetail('${key}')">
+        <div class="hist-date">${new Date(r.endedAt||r.startedAt||0).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+        <div class="hist-meta">Cal: ${(r.cal?.finished||[]).length} · PHRF: ${(r.phrf?.finished||[]).length}</div>
+        <span style="color:var(--muted)">▾</span>
+      </div>
+      <div class="hist-detail" id="hd-${key}">
+        ${buildHistResults(r,'cal')}${buildHistResults(r,'phrf')}
+        <button class="btn cal" style="margin-top:10px;font-size:12px" onclick="exportHistory('${key}');event.stopPropagation()">EXPORT</button>
+      </div>
+    </div>`).join('');
+}
+function buildHistResults(r,fleet){
+  const finished=r[fleet]?.finished||[];
+  if(!finished.length)return'';
+  return`<div style="margin-bottom:10px"><div style="font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:6px">${fleet==='cal'?'CAL-20':'PHRF'}</div>${
+    finished.map(f=>`<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--b1)">
+      <div class="place-b ${f.place<=3?'p'+f.place:'pn'}" style="width:22px;height:22px;font-size:12px">${f.place}</div>
+      <div style="flex:1;font-size:13px;color:var(--white)">${f.boatName||f.name||'—'}</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:12px">${fmtTime(f.elapsedSec,false)}</div>
+    </div>`).join('')
+  }</div>`;
+}
+function toggleHistDetail(key){document.getElementById(`hd-${key}`)?.classList.toggle('open');}
+function exportHistory(key){get(ref(db,`history/${key}`)).then(s=>{if(s.exists()){buildExportText(s.val());openModal('export-modal');}});}
+
+// ─────────────── EXPORT ───────────────
+function openExport(){if(!raceData&&!window._exportRaceData)return;buildExportText(window._exportRaceData||raceData);openModal('export-modal');}
+function buildExportText(r){
+  const lines=[];
+  lines.push('FINISH LINE — RACE RESULTS');
+  lines.push('═'.repeat(40));
+  lines.push(`Date: ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`);
+  lines.push('');
+  ['cal','phrf'].forEach(fleet=>{
+    const fd=r[fleet];const iso=fleet==='cal'?r.calStartISO:r.phrfStartISO;
+    lines.push(`${fleet==='cal'?'CAL-20':'PHRF'} FLEET — Start: ${iso?new Date(iso).toLocaleTimeString('en-US',{hour12:false}):'—'}`);
+    lines.push('─'.repeat(40));
+    const finished=fd?.finished||[];
+    if(!finished.length){lines.push('  No finishes recorded');lines.push('');return;}
+    finished.forEach(f=>{
+      let line=`  ${f.place}. ${(f.boatName||f.name||'').padEnd(20)} #${(f.sail||'').padEnd(10)} ${fmtTime(f.elapsedSec,false).padEnd(10)} ${f.clockTime||''}`;
+      if(fleet==='phrf'&&r.raceDist&&f.phrf!=null){const cs=f.elapsedSec-(f.phrf*r.raceDist);line+=`  CORR: ${cs<0?'−':''}${fmtTime(Math.abs(cs),false)}`;}
+      lines.push(line);
+    });
+    lines.push('');
+  });
+  lines.push('FINISH LOG');lines.push('─'.repeat(40));
+  const allLog=[...(r.cal?.log||[]),...(r.phrf?.log||[])].sort((a,b)=>a.ts-b.ts);
+  allLog.forEach(e=>lines.push(`  ${e.clock||''}  ${e.txt}`));
+  const txt=lines.join('\n');
+  document.getElementById('export-pre').textContent=txt;
+  window._exportText=txt; window._exportRaceData=r;
+}
+function copyExport(){navigator.clipboard?.writeText(window._exportText||'').catch(()=>{});alert('Copied!');}
+function dlCSV(){
+  const r=window._exportRaceData||raceData;if(!r)return;
+  const rows=[['Fleet','Place','Boat','Sail','PHRF','Elapsed','Clock','Corrected']];
+  ['cal','phrf'].forEach(fleet=>{
+    (r[fleet]?.finished||[]).forEach(f=>{
+      let corr='';
+      if(fleet==='phrf'&&r.raceDist&&f.phrf!=null){const cs=f.elapsedSec-(f.phrf*r.raceDist);corr=(cs<0?'-':'')+fmtTime(Math.abs(cs),false);}
+      rows.push([fleet==='cal'?'Cal-20':'PHRF',f.place,f.boatName||f.name||'',f.sail||'',f.phrf!=null?f.phrf:'',fmtTime(f.elapsedSec,false),f.clockTime||'',corr]);
+    });
+  });
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`race-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+function shareExp(){if(navigator.share){navigator.share({title:'Race Results',text:window._exportText||''}).catch(()=>{});}else{copyExport();}}
+
+// ─────────────── MODAL/DRAWER HELPERS ───────────────
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+function closeDrawer(id){document.getElementById(id).classList.add('hidden');}
+
+function createRace() {
+  const name = document.getElementById('land-name').value.trim();
+  if (!name) { alert('Please enter your name first'); return; }
+  myName = name;
+  sessionStorage.setItem('fl_name', name);
+  roomCode = ensureRoomCode();
+  document.getElementById('land-room').value = roomCode;
+  updatePresence();
+  showScreen('officer');
+  // Open setup drawer immediately
+  setTimeout(() => window.openDrawer('setup-drawer'), 100);
+}
+
+// ─────────────── ROOM CODE ───────────────
+function ensureRoomCode(){
+  if(!roomCode){roomCode=Math.random().toString(36).slice(2,6).toUpperCase();}
+  return roomCode;
+}
+
+// ─────────────── BOOT ───────────────
+// Assign all functions to window so onclick attributes work
+window.landJoin=landJoin;
+window.createRace=createRace;
+window.doLogin=doLogin;
+window.openModal=openModal;
+window.closeModal=closeModal;
+window.closeDrawer=closeDrawer;
+window.openDrawer=function(id){
+  if(id==='setup-drawer')renderSetupDrawer();
+  document.getElementById(id).classList.remove('hidden');
+  if(id==='users-drawer')renderUsersDrawer();
+};
+window.rosterTab=rosterTab;
+window.rosterShowAdd=rosterShowAdd;
+window.fleetShowAdd=fleetShowAdd;
+window.stageBoat=stageBoat;
+window.unstageBoat=unstageBoat;
+window.tapFinish=tapFinish;
+window.tapOCS=tapOCS;
+window.clearOCS=clearOCS;
+window.raceDragStart=raceDragStart;
+window.raceDragOver=raceDragOver;
+window.raceDragLeave=raceDragLeave;
+window.raceDrop=raceDrop;
+window.stageDragOver=stageDragOver;
+window.stageDragLeave=stageDragLeave;
+window.stageDrop=stageDrop;
+window.touchDragStart=touchDragStart;
+window.openExport=openExport;
+window.copyExport=copyExport;
+window.dlCSV=dlCSV;
+window.shareExp=shareExp;
+window.toggleOffLog=toggleOffLog;
+window.endRace=endRace;
+window.backToLanding=backToLanding;
+window.saveRosterBoat=saveRosterBoat;
+window.editRosterBoat=editRosterBoat;
+window.cancelRosterEdit=cancelRosterEdit;
+window.saveRosterEdit=saveRosterEdit;
+window.deleteRosterBoat=deleteRosterBoat;
+window.addRosterToSetup=addRosterToSetup;
+window.saveNewFleet=saveNewFleet;
+window.editFleet=editFleet;
+window.cancelFleetEdit=cancelFleetEdit;
+window.saveFleetEdit=saveFleetEdit;
+window.deleteFleet=deleteFleet;
+window.toggleHistDetail=toggleHistDetail;
+window.exportHistory=exportHistory;
+window.getRoomCode=ensureRoomCode;
+window.suStartRace=async function(){
+  roomCode=ensureRoomCode();
+  document.getElementById('land-room').value=roomCode;
+  const errEl=document.getElementById('su-err');
+  errEl.style.display='none';
+  if(!suBoats.cal.length&&!suBoats.phrf.length){errEl.textContent='Add boats first.';errEl.style.display='block';return;}
+  const calS=document.getElementById('su-cal-start').value;
+  const phrfS=document.getElementById('su-phrf-start').value;
+  const dist=parseFloat(document.getElementById('su-dist').value);
+  if(!calS||!phrfS){errEl.textContent='Set both start times.';errEl.style.display='block';return;}
+  const race={
+    calStartISO:new Date(calS).toISOString(),
+    phrfStartISO:new Date(phrfS).toISOString(),
+    raceDist:isNaN(dist)?10:dist,
+    startedBy:myName,startedAt:Date.now(),
+    cal:{boats:{},finished:[],ocsBoats:[],log:[{type:'start',txt:`CAL-20 race started by ${myName}`,who:myName,ts:Date.now(),clock:new Date().toLocaleTimeString('en-US',{hour12:false})}]},
+    phrf:{boats:{},finished:[],ocsBoats:[],log:[{type:'start',txt:`PHRF race started by ${myName}`,who:myName,ts:Date.now(),clock:new Date().toLocaleTimeString('en-US',{hour12:false})}]},
+    presence:{}
+  };
+  suBoats.cal.forEach((b,i)=>{race.cal.boats[b.id]={...b,order:i};});
+  suBoats.phrf.forEach((b,i)=>{race.phrf.boats[b.id]={...b,order:i};});
+  await set(ref(db,`races/${roomCode}`),race);
+  subscribeRace();
+  updatePresence();
+  suBoats={cal:[],phrf:[]};
+  closeDrawer('setup-drawer');
+  showScreen('officer');
+};
+window.suAddBoat=suAddBoat;
+window.suRemoveBoat=suRemoveBoat;
+window.resetRace=resetRace;
+init();
+</script>
+</body>
+</html>
